@@ -20,15 +20,17 @@ def main(**kwargs):
     cfg.parse(kwargs)
     
     '''step 1. define net'''
+    '''
     assert cfg.model in cfg.model_names,'No such a model!Check your inputs.'
     net = None
     if cfg.model[0:3] == 'vgg':
         net = models.VGGNet(cfg.model)
-    elif cfg.model[0:3] == 'res':
-        net = models.ResNet(int(cfg.model[6:]),10)
+    elif cfg.model[0:3] == 'cifar_res':
+        net = models.cifarResNet(int(cfg.model[6:]),10)
     else:
         pass
-        
+    '''
+    net = models.resnet18()
     #初始化权重
     net.init_pm()
     #net = VGGNet('vgg19')
@@ -36,7 +38,7 @@ def main(**kwargs):
         net = net.cuda()
     
     '''step 2. load data'''
-    normalize = transforms.Normalize(mean=[0.485,0.456,0.406],std=[0.229,0.224,0.225])
+    normalize = transforms.Normalize((0.4914,0.4822,0.4465),(0.2023,0.1994,0.2010))
     
     
     #训练集
@@ -54,14 +56,15 @@ def main(**kwargs):
     #测试集
     test_tf=transforms.Compose([
             transforms.ToTensor(),
+            normalize
             ])
     test_dataset = tv.datasets.CIFAR10(root='data/',train=False,download=True,transform=test_tf)
-    test_dataloader = t.utils.data.DataLoader(test_dataset,batch_size = cfg.batch_size,
+    test_dataloader = t.utils.data.DataLoader(test_dataset,batch_size = 100,
                                               shuffle = False,num_workers=cfg.num_workers)
     
     #定义误差函数和优化函数
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(),lr=cfg.lr,momentum=0.9,weight_decay =1e-4)  
+    optimizer = optim.SGD(net.parameters(),lr=cfg.lr,momentum=0.9,weight_decay = 5e-4)
     lr = cfg.lr
     
     #记录验证集的最高精度
@@ -102,7 +105,7 @@ def main(**kwargs):
             net.save()
         
         #更新lr
-        if epoch == 100 or epoch == 150:
+        if epoch == 149 or epoch == 249:
             lr = lr * cfg.lr_decay
             for pmg in optimizer.param_groups:
                 pmg['lr'] = lr

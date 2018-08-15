@@ -17,7 +17,7 @@ class BasicModule(nn.Module):
     def init_pm(self):
         for m in self.modules():
             if isinstance(m,nn.Conv2d):
-                nn.init.normal_(m.weight,0,0.0001)
+                nn.init.kaiming_normal_(m.weight,mode='fan_out')
                 if m.bias is not None:
                     nn.init.constant_(m.bias,0)
             if isinstance(m,nn.BatchNorm2d):
@@ -29,7 +29,7 @@ class BasicModule(nn.Module):
                 if m.bias is not None:
                     nn.init.constant_(m.bias,0)
             if isinstance(m,nn.Linear):
-                nn.init.normal_(m.weight,0,1e-3)
+                nn.init.normal_(m.weight,1e-3)
                 if m.bias is not None:
                     nn.init.constant_(m.bias,0)
     
